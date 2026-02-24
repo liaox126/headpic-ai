@@ -8,16 +8,15 @@ const plans = [
   {
     id: "starter",
     name: "Starter",
-    price: "$19",
+    price: "$9",
     description: "Perfect for trying it out",
     features: ["8 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
-    paymentLink: "https://buy.stripe.com/fZu3cubxI3CV1wn9LLcV200",
   },
   {
     id: "pro",
     name: "Pro",
-    price: "$39",
+    price: "$29",
     description: "Most popular choice",
     features: [
       "20 AI headshots",
@@ -27,12 +26,11 @@ const plans = [
       "Re-generation",
     ],
     highlighted: true,
-    paymentLink: "https://buy.stripe.com/9B69AS0T4c9r1wn7DDcV201",
   },
   {
     id: "ultimate",
     name: "Ultimate",
-    price: "$69",
+    price: "$49",
     description: "For teams and professionals",
     features: [
       "40 AI headshots",
@@ -43,11 +41,30 @@ const plans = [
       "Background removal",
     ],
     highlighted: false,
-    paymentLink: "https://buy.stripe.com/00wdR859kflDej91ffcV202",
   },
 ];
 
 export default function PricingSection() {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  async function handleCheckout(planId: string) {
+    setLoading(planId);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+    } finally {
+      setLoading(null);
+    }
+  }
   return (
     <section id="pricing" className="bg-primary/5 py-20">
       <div className="mx-auto max-w-6xl px-4">
@@ -95,17 +112,26 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <a
-                href={plan.paymentLink}
+              <button
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loading !== null}
                 className={cn(
                   "block rounded-lg py-3 text-center font-semibold transition-colors",
                   plan.highlighted
                     ? "bg-gold text-white hover:bg-gold-light"
-                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "bg-primary/10 text-primary hover:bg-primary/20",
+                  loading === plan.id && "opacity-70 cursor-wait"
                 )}
               >
-                Get Started
-              </a>
+                {loading === plan.id ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </span>
+                ) : (
+                  "Get Started"
+                )}
+              </button>
             </div>
           ))}
         </div>
