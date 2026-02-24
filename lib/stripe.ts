@@ -9,6 +9,8 @@ export function getStripe(): Stripe {
     }
     _stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2026-01-28.clover",
+      timeout: 30000, // 30s timeout
+      maxNetworkRetries: 3,
     });
   }
   return _stripe;
@@ -17,24 +19,21 @@ export function getStripe(): Stripe {
 export const PLANS = {
   starter: {
     name: "Starter",
-    price: 1900, // $19 in cents
+    price: 1900,
     headshots: 8,
     styles: 2,
-    priceId: process.env.STRIPE_PRICE_STARTER || "",
   },
   pro: {
     name: "Pro",
-    price: 3900, // $39
+    price: 3900,
     headshots: 20,
     styles: 5,
-    priceId: process.env.STRIPE_PRICE_PRO || "",
   },
   ultimate: {
     name: "Ultimate",
-    price: 6900, // $69
+    price: 6900,
     headshots: 40,
     styles: 5,
-    priceId: process.env.STRIPE_PRICE_ULTIMATE || "",
   },
 } as const;
 
