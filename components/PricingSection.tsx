@@ -12,7 +12,7 @@ const plans = [
     description: "Perfect for trying it out",
     features: ["8 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
-    paymentLink: "https://buy.stripe.com/test_dRm00ibz2gMN6Jr91zgQE00",
+    paymentLink: "https://buy.stripe.com/fZu3cubxI3CV1wn9LLcV200",
   },
   {
     id: "pro",
@@ -27,7 +27,7 @@ const plans = [
       "Re-generation",
     ],
     highlighted: true,
-    paymentLink: "https://buy.stripe.com/test_28E00i32weEF7Nv0v3gQE01",
+    paymentLink: "https://buy.stripe.com/9B69AS0T4c9r1wn7DDcV201",
   },
   {
     id: "ultimate",
@@ -43,7 +43,7 @@ const plans = [
       "Background removal",
     ],
     highlighted: false,
-    paymentLink: "https://buy.stripe.com/test_fZu00icD60NP2tb4LjgQE02",
+    paymentLink: "https://buy.stripe.com/00wdR859kflDej91ffcV202",
   },
 ];
 
