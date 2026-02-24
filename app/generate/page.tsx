@@ -79,7 +79,7 @@ export default function GeneratePage() {
             <span className="text-sm font-medium">Back</span>
           </Link>
           <Link href="/" className="text-xl font-bold text-primary">
-            HeadPic<span className="text-gold">.ai</span>
+            HeadPic<span className="text-gold">.site</span>
           </Link>
           <div className="w-16" />
         </div>

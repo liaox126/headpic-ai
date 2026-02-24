@@ -13,7 +13,7 @@ export default function Home() {
       <header className="absolute top-0 z-10 w-full">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
           <Link href="/" className="text-xl font-bold text-white">
-            HeadPic<span className="text-gold">.ai</span>
+            HeadPic<span className="text-gold">.site</span>
           </Link>
           <Link
             href="/generate"
@@ -53,7 +53,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-primary/10 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4 text-center text-sm text-primary/40">
-          &copy; {new Date().getFullYear()} HeadPic.ai. All rights reserved.
+          &copy; {new Date().getFullYear()} HeadPic. All rights reserved.
         </div>
       </footer>
     </main>

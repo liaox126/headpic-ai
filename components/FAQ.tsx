@@ -42,7 +42,7 @@ export default function FAQ() {
           Frequently Asked <span className="text-gold">Questions</span>
         </h2>
         <p className="mx-auto mb-12 max-w-xl text-center text-primary/60">
-          Everything you need to know about HeadPic.ai
+          Everything you need to know about HeadPic
         </p>
 
         <div className="space-y-3">
