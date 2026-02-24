@@ -19,19 +19,19 @@ export function getStripe(): Stripe {
 export const PLANS = {
   starter: {
     name: "Starter",
-    price: 1900,
+    price: 990,
     headshots: 8,
     styles: 2,
   },
   pro: {
     name: "Pro",
-    price: 3900,
+    price: 1990,
     headshots: 20,
     styles: 5,
   },
   ultimate: {
     name: "Ultimate",
-    price: 6900,
+    price: 2990,
     headshots: 40,
     styles: 5,
   },
