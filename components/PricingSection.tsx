@@ -8,7 +8,7 @@ const plans = [
   {
     id: "starter",
     name: "Starter",
-    price: "$9",
+    price: "$9.9",
     description: "Perfect for trying it out",
     features: ["8 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
@@ -16,7 +16,7 @@ const plans = [
   {
     id: "pro",
     name: "Pro",
-    price: "$29",
+    price: "$19.9",
     description: "Most popular choice",
     features: [
       "20 AI headshots",
@@ -30,7 +30,7 @@ const plans = [
   {
     id: "ultimate",
     name: "Ultimate",
-    price: "$49",
+    price: "$29.9",
     description: "For teams and professionals",
     features: [
       "40 AI headshots",
