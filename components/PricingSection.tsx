@@ -1,16 +1,20 @@
-import { Check } from "lucide-react";
-import Link from "next/link";
+"use client";
+
+import { useState } from "react";
+import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const plans = [
   {
+    id: "starter",
     name: "Starter",
     price: "$19",
     description: "Perfect for trying it out",
-    features: ["5 AI headshots", "2 styles", "Standard quality", "24h delivery"],
+    features: ["8 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
   },
   {
+    id: "pro",
     name: "Pro",
     price: "$39",
     description: "Most popular choice",
@@ -24,11 +28,12 @@ const plans = [
     highlighted: true,
   },
   {
+    id: "ultimate",
     name: "Ultimate",
     price: "$69",
     description: "For teams and professionals",
     features: [
-      "50 AI headshots",
+      "40 AI headshots",
       "All 5 styles",
       "4K quality",
       "Instant delivery",
@@ -40,8 +45,32 @@ const plans = [
 ];
 
 export default function PricingSection() {
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleCheckout = async (planId: string) => {
+    setLoading(planId);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        // Fallback: go to generate page for free trial
+        window.location.href = "/generate";
+      }
+    } catch {
+      window.location.href = "/generate";
+    } finally {
+      setLoading(null);
+    }
+  };
+
   return (
-    <section className="bg-primary/5 py-20">
+    <section id="pricing" className="bg-primary/5 py-20">
       <div className="mx-auto max-w-6xl px-4">
         <h2 className="mb-4 text-center text-3xl font-bold text-primary">
           Simple, Transparent <span className="text-gold">Pricing</span>
@@ -54,7 +83,7 @@ export default function PricingSection() {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {plans.map((plan) => (
             <div
-              key={plan.name}
+              key={plan.id}
               className={cn(
                 "relative flex flex-col rounded-2xl border-2 bg-white p-8 transition-shadow",
                 plan.highlighted
@@ -87,17 +116,26 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <Link
-                href="/generate"
+              <button
+                onClick={() => handleCheckout(plan.id)}
+                disabled={loading !== null}
                 className={cn(
-                  "block rounded-lg py-3 text-center font-semibold transition-colors",
+                  "flex items-center justify-center gap-2 rounded-lg py-3 font-semibold transition-colors",
                   plan.highlighted
                     ? "bg-gold text-white hover:bg-gold-light"
-                    : "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "bg-primary/10 text-primary hover:bg-primary/20",
+                  loading !== null && "cursor-not-allowed opacity-60"
                 )}
               >
-                Get Started
-              </Link>
+                {loading === plan.id ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  "Get Started"
+                )}
+              </button>
             </div>
           ))}
         </div>

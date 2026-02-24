@@ -1,0 +1,47 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getStripe, PLANS, type PlanId } from "@/lib/stripe";
+
+export async function POST(req: NextRequest) {
+  try {
+    const { planId } = await req.json();
+
+    if (!planId || !PLANS[planId as PlanId]) {
+      return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
+    }
+
+    const plan = PLANS[planId as PlanId];
+
+    const session = await getStripe().checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: `HeadPic.ai ${plan.name}`,
+              description: `${plan.headshots} AI headshots, ${plan.styles} styles`,
+            },
+            unit_amount: plan.price,
+          },
+          quantity: 1,
+        },
+      ],
+      success_url: `${req.nextUrl.origin}/generate?paid=true&plan=${planId}`,
+      cancel_url: `${req.nextUrl.origin}/#pricing`,
+      metadata: {
+        planId,
+        headshots: String(plan.headshots),
+        styles: String(plan.styles),
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("Checkout error:", err);
+    return NextResponse.json(
+      { error: "Failed to create checkout session" },
+      { status: 500 }
+    );
+  }
+}
