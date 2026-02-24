@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Upload, X, ImageIcon } from "lucide-react";
+import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UploadZoneProps {
@@ -10,8 +10,58 @@ interface UploadZoneProps {
   onClear: () => void;
 }
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB original file limit
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_DIMENSION = 1536; // Max width/height after resize
+const JPEG_QUALITY = 0.85; // Compression quality
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+
+      let { width, height } = img;
+
+      // Scale down if needed
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("Could not get canvas context"));
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Convert to JPEG base64
+      const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
+      const base64 = dataUrl.split(",")[1];
+      resolve(base64);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Failed to load image"));
+    };
+
+    img.src = url;
+  });
+}
 
 export default function UploadZone({
   onImageSelect,
@@ -20,9 +70,10 @@ export default function UploadZone({
 }: UploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   const processFile = useCallback(
-    (file: File) => {
+    async (file: File) => {
       setError(null);
 
       if (!ACCEPTED_TYPES.includes(file.type)) {
@@ -35,14 +86,15 @@ export default function UploadZone({
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const result = e.target?.result as string;
-        // Extract base64 data after the data URL prefix
-        const base64 = result.split(",")[1];
+      setProcessing(true);
+      try {
+        const base64 = await compressImage(file);
         onImageSelect(base64);
-      };
-      reader.readAsDataURL(file);
+      } catch {
+        setError("Failed to process image. Please try another photo.");
+      } finally {
+        setProcessing(false);
+      }
     },
     [onImageSelect]
   );
@@ -99,18 +151,25 @@ export default function UploadZone({
           "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all",
           dragActive
             ? "border-gold bg-gold/5"
-            : "border-primary/20 bg-primary/5 hover:border-gold/50 hover:bg-gold/5"
+            : "border-primary/20 bg-primary/5 hover:border-gold/50 hover:bg-gold/5",
+          processing && "pointer-events-none opacity-60"
         )}
       >
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-          {dragActive ? (
+          {processing ? (
+            <Loader2 className="h-8 w-8 animate-spin text-gold" />
+          ) : dragActive ? (
             <ImageIcon className="h-8 w-8 text-gold" />
           ) : (
             <Upload className="h-8 w-8 text-primary/40" />
           )}
         </div>
         <p className="mb-1 text-lg font-medium text-primary">
-          {dragActive ? "Drop your photo here" : "Upload your photo"}
+          {processing
+            ? "Processing photo..."
+            : dragActive
+              ? "Drop your photo here"
+              : "Upload your photo"}
         </p>
         <p className="text-sm text-primary/50">
           Drag & drop or click to browse. JPG, PNG, WebP up to 10MB.
