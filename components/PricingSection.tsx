@@ -12,6 +12,7 @@ const plans = [
     description: "Perfect for trying it out",
     features: ["8 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
+    paymentLink: "https://buy.stripe.com/test_dRm00ibz2gMN6Jr91zgQE00",
   },
   {
     id: "pro",
@@ -26,6 +27,7 @@ const plans = [
       "Re-generation",
     ],
     highlighted: true,
+    paymentLink: "https://buy.stripe.com/test_28E00i32weEF7Nv0v3gQE01",
   },
   {
     id: "ultimate",
@@ -41,34 +43,11 @@ const plans = [
       "Background removal",
     ],
     highlighted: false,
+    paymentLink: "https://buy.stripe.com/test_fZu00icD60NP2tb4LjgQE02",
   },
 ];
 
 export default function PricingSection() {
-  const [loading, setLoading] = useState<string | null>(null);
-
-  const handleCheckout = async (planId: string) => {
-    setLoading(planId);
-    try {
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        // Fallback: go to generate page for free trial
-        window.location.href = "/generate";
-      }
-    } catch {
-      window.location.href = "/generate";
-    } finally {
-      setLoading(null);
-    }
-  };
-
   return (
     <section id="pricing" className="bg-primary/5 py-20">
       <div className="mx-auto max-w-6xl px-4">
@@ -116,26 +95,17 @@ export default function PricingSection() {
                 ))}
               </ul>
 
-              <button
-                onClick={() => handleCheckout(plan.id)}
-                disabled={loading !== null}
+              <a
+                href={plan.paymentLink}
                 className={cn(
-                  "flex items-center justify-center gap-2 rounded-lg py-3 font-semibold transition-colors",
+                  "block rounded-lg py-3 text-center font-semibold transition-colors",
                   plan.highlighted
                     ? "bg-gold text-white hover:bg-gold-light"
-                    : "bg-primary/10 text-primary hover:bg-primary/20",
-                  loading !== null && "cursor-not-allowed opacity-60"
+                    : "bg-primary/10 text-primary hover:bg-primary/20"
                 )}
               >
-                {loading === plan.id ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Get Started"
-                )}
-              </button>
+                Get Started
+              </a>
             </div>
           ))}
         </div>
