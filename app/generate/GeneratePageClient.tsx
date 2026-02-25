@@ -18,6 +18,7 @@ interface GenerateResult {
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
+  const adminKey = searchParams.get("admin");
 
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -28,7 +29,7 @@ export default function GeneratePage() {
   const [remaining, setRemaining] = useState<number | null>(null);
   const [freeUsed, setFreeUsed] = useState(false);
 
-  const isPaid = !!sessionId;
+  const isPaid = !!sessionId || !!adminKey;
 
   const toggleStyle = (id: string) => {
     if (!isPaid && !freeUsed) {
@@ -52,7 +53,10 @@ export default function GeneratePage() {
     try {
       const res = await fetch("/api/generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(adminKey ? { "x-admin-key": adminKey } : {}),
+        },
         body: JSON.stringify({
           imageBase64,
           styleIds: selectedStyles,

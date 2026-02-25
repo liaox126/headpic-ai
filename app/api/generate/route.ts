@@ -37,7 +37,14 @@ export async function POST(req: NextRequest) {
     let isFreePreview = false;
     let remaining = 0;
 
-    if (sessionId) {
+    // Admin bypass for testing
+    const adminKey = req.headers.get("x-admin-key");
+    const isAdmin = adminKey === process.env.ADMIN_SECRET;
+
+    if (isAdmin) {
+      // Skip all credit checks for admin testing
+      isFreePreview = false;
+    } else if (sessionId) {
       // Paid user - verify credits
       const credits = await getCredits(sessionId);
       if (!credits) {
