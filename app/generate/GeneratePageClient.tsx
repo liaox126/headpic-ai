@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Sparkles, CreditCard, Zap } from "lucide-react";
@@ -24,6 +24,7 @@ export default function GeneratePage() {
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [results, setResults] = useState<GenerateResult[]>([]);
   const [loading, setLoading] = useState(false);
+  const [currentStyle, setCurrentStyle] = useState<string | null>(null);
   const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -33,7 +34,6 @@ export default function GeneratePage() {
 
   const toggleStyle = (id: string) => {
     if (!isPaid && !freeUsed) {
-      // Free users can only select 1 style
       setSelectedStyles([id]);
       return;
     }
@@ -50,45 +50,62 @@ export default function GeneratePage() {
     setResults([]);
     setProgress({ done: 0, total: selectedStyles.length });
 
-    try {
-      const res = await fetch("/api/generate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(adminKey ? { "x-admin-key": adminKey } : {}),
-        },
-        body: JSON.stringify({
-          imageBase64,
-          styleIds: selectedStyles,
-          sessionId: sessionId || undefined,
-          adminKey: adminKey || undefined,
-        }),
-      });
+    const stylesToGenerate = styles.filter((s) => selectedStyles.includes(s.id));
 
-      const data = await res.json();
+    for (let i = 0; i < stylesToGenerate.length; i++) {
+      const style = stylesToGenerate[i];
+      setCurrentStyle(style.name);
 
-      if (!res.ok) {
-        if (data.code === "FREE_USED" || data.code === "FREE_LIMIT") {
+      try {
+        const res = await fetch("/api/generate", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(adminKey ? { "x-admin-key": adminKey } : {}),
+          },
+          body: JSON.stringify({
+            imageBase64,
+            styleIds: [style.id],
+            sessionId: sessionId || undefined,
+            adminKey: adminKey || undefined,
+          }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (data.code === "FREE_USED" || data.code === "FREE_LIMIT") {
+            setFreeUsed(true);
+          }
+          throw new Error(data.error || `Server error (${res.status})`);
+        }
+
+        if (data.results && data.results.length > 0) {
+          setResults((prev) => [...prev, ...data.results]);
+        }
+
+        setProgress({ done: i + 1, total: stylesToGenerate.length });
+
+        if (data.remaining !== undefined && isPaid) {
+          setRemaining(data.remaining);
+        }
+
+        if (data.isFreePreview) {
           setFreeUsed(true);
         }
-        throw new Error(data.error || `Server error (${res.status})`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Generation failed";
+        // Don't stop on individual failures, continue with next style
+        if (i === 0 && stylesToGenerate.length === 1) {
+          setError(msg);
+        }
+        console.error(`Failed to generate ${style.name}:`, msg);
+        setProgress({ done: i + 1, total: stylesToGenerate.length });
       }
-
-      setResults(data.results);
-      setProgress({ done: selectedStyles.length, total: selectedStyles.length });
-
-      if (data.remaining !== undefined && isPaid) {
-        setRemaining(data.remaining);
-      }
-
-      if (data.isFreePreview) {
-        setFreeUsed(true);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Generation failed. Please try again.");
-    } finally {
-      setLoading(false);
     }
+
+    setCurrentStyle(null);
+    setLoading(false);
   };
 
   const handleClear = () => {
@@ -152,33 +169,61 @@ export default function GeneratePage() {
       )}
 
       <div className="mx-auto max-w-4xl px-4 py-12">
-        {/* Results view */}
-        {results.length > 0 ? (
-          <div>
-            <ResultGrid results={results} isFreePreview={!isPaid} />
-            <div className="mt-8 flex justify-center gap-4">
-              {isPaid && remaining !== null && remaining > 0 && (
-                <button
-                  onClick={() => {
-                    setResults([]);
-                    setSelectedStyles([]);
-                  }}
-                  className="rounded-lg border-2 border-primary/20 px-6 py-3 font-medium text-primary transition-colors hover:border-gold hover:text-gold"
-                >
-                  Generate More ({remaining} left)
-                </button>
-              )}
-              {(!isPaid || (remaining !== null && remaining === 0)) && (
-                <Link
-                  href="/#pricing"
-                  className="rounded-lg bg-gold px-6 py-3 font-medium text-white transition-colors hover:bg-gold-light"
-                >
-                  {isPaid ? "Buy More Credits" : "Upgrade for More"}
-                </Link>
-              )}
+        {/* Loading progress overlay */}
+        {loading && (
+          <div className="mb-8 rounded-xl border-2 border-gold/20 bg-gold/5 p-6">
+            <div className="flex items-center gap-4 mb-4">
+              <Loader2 className="h-6 w-6 animate-spin text-gold" />
+              <div>
+                <p className="font-semibold text-primary">
+                  Generating {currentStyle}...
+                </p>
+                <p className="text-sm text-primary/50">
+                  {progress.done} of {progress.total} completed — this takes about 10-30 seconds per style
+                </p>
+              </div>
+            </div>
+            <div className="h-2 rounded-full bg-primary/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gold transition-all duration-500"
+                style={{ width: `${progress.total > 0 ? ((progress.done + 0.5) / progress.total) * 100 : 0}%` }}
+              />
             </div>
           </div>
-        ) : freeUsed && !isPaid ? (
+        )}
+
+        {/* Results showing as they come in */}
+        {results.length > 0 && (
+          <div className="mb-8">
+            <ResultGrid results={results} isFreePreview={!isPaid} />
+            {!loading && (
+              <div className="mt-8 flex justify-center gap-4">
+                {isPaid && remaining !== null && remaining > 0 && (
+                  <button
+                    onClick={() => {
+                      setResults([]);
+                      setSelectedStyles([]);
+                    }}
+                    className="rounded-lg border-2 border-primary/20 px-6 py-3 font-medium text-primary transition-colors hover:border-gold hover:text-gold"
+                  >
+                    Generate More ({remaining} left)
+                  </button>
+                )}
+                {(!isPaid || (remaining !== null && remaining === 0)) && (
+                  <Link
+                    href="/#pricing"
+                    className="rounded-lg bg-gold px-6 py-3 font-medium text-white transition-colors hover:bg-gold-light"
+                  >
+                    {isPaid ? "Buy More Credits" : "Upgrade for More"}
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Show upload/style picker when not loading and no results */}
+        {!loading && results.length === 0 && (freeUsed && !isPaid ? (
           <div className="text-center py-20">
             <h2 className="text-2xl font-bold text-primary mb-4">
               Want more headshots?
@@ -243,17 +288,8 @@ export default function GeneratePage() {
                 disabled={!canGenerate}
                 className="inline-flex items-center gap-2 rounded-xl bg-gold px-10 py-4 text-lg font-bold text-primary shadow-lg shadow-gold/20 transition-all hover:bg-gold-light hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
               >
-                {loading ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Generating {progress.done}/{progress.total}...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-5 w-5" />
-                    {isPaid ? "Generate Headshots" : "Generate Free Preview"}
-                  </>
-                )}
+                <Sparkles className="h-5 w-5" />
+                {isPaid ? "Generate Headshots" : "Generate Free Preview"}
               </button>
               {!imageBase64 && (
                 <p className="mt-3 text-sm text-primary/40">Upload a photo to get started</p>
@@ -263,7 +299,7 @@ export default function GeneratePage() {
               )}
             </div>
           </div>
-        )}
+        ))}
       </div>
     </main>
   );
