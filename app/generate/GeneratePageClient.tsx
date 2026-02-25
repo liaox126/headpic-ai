@@ -61,6 +61,7 @@ export default function GeneratePage() {
           imageBase64,
           styleIds: selectedStyles,
           sessionId: sessionId || undefined,
+          adminKey: adminKey || undefined,
         }),
       });
 

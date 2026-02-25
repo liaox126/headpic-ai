@@ -38,8 +38,8 @@ export async function POST(req: NextRequest) {
     let remaining = 0;
 
     // Admin bypass for testing
-    const adminKey = req.headers.get("x-admin-key");
-    const isAdmin = adminKey === process.env.ADMIN_SECRET;
+    const adminKey = req.headers.get("x-admin-key") || body.adminKey;
+    const isAdmin = adminKey && adminKey === process.env.ADMIN_SECRET;
 
     if (isAdmin) {
       // Skip all credit checks for admin testing
