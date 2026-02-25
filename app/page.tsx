@@ -37,8 +37,8 @@ export default function Home() {
             Ready for Your New <span className="text-gold">Headshot</span>?
           </h2>
           <p className="mb-8 text-white/60">
-            Join thousands of professionals who upgraded their online presence
-            with AI-generated headshots.
+            Get a polished, professional headshot in under 60 seconds —
+            no photographer, no studio, no hassle.
           </p>
           <Link
             href="/generate"
