@@ -15,6 +15,7 @@ export interface Credits {
   plan: string;
   remaining: number;
   total: number;
+  maxStyles: number;
   createdAt: string;
 }
 
@@ -23,13 +24,15 @@ const CREDITS_TTL = 30 * 24 * 60 * 60; // 30 days in seconds
 export async function storeCredits(
   sessionId: string,
   plan: string,
-  total: number
+  total: number,
+  maxStyles: number = 5
 ): Promise<void> {
   const redis = await getRedis();
   const credits: Credits = {
     plan,
     remaining: total,
     total,
+    maxStyles,
     createdAt: new Date().toISOString(),
   };
   await redis.set(`credits:${sessionId}`, JSON.stringify(credits), {

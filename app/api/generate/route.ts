@@ -8,11 +8,23 @@ export const maxDuration = 120;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageBase64, styleIds, sessionId } = body;
+    const { images, imageBase64, styleIds, sessionId } = body;
 
-    if (!imageBase64 || typeof imageBase64 !== "string") {
+    // Support both new multi-image format and legacy single image
+    const imageList: string[] = Array.isArray(images) && images.length > 0
+      ? images
+      : imageBase64 ? [imageBase64] : [];
+
+    if (imageList.length === 0 || !imageList.every((img: unknown) => typeof img === "string")) {
       return NextResponse.json(
         { error: "Missing or invalid image data" },
+        { status: 400 }
+      );
+    }
+
+    if (imageList.length > 3) {
+      return NextResponse.json(
+        { error: "Maximum 3 photos allowed" },
         { status: 400 }
       );
     }
@@ -50,6 +62,19 @@ export async function POST(req: NextRequest) {
       if (!credits) {
         return NextResponse.json(
           { error: "Invalid or expired session. Please purchase a plan.", code: "NO_CREDITS" },
+          { status: 403 }
+        );
+      }
+
+      // Enforce style limit per plan
+      const maxStyles = credits.maxStyles || 5;
+      if (styleIds.length > maxStyles) {
+        return NextResponse.json(
+          {
+            error: `Your ${credits.plan} plan allows ${maxStyles} styles. Please select fewer styles.`,
+            code: "STYLE_LIMIT",
+            maxStyles,
+          },
           { status: 403 }
         );
       }
@@ -102,7 +127,7 @@ export async function POST(req: NextRequest) {
 
     const generationPromises = selectedStyles.map(async (style) => {
       try {
-        const resultBase64 = await generateHeadshot(imageBase64, style.prompt);
+        const resultBase64 = await generateHeadshot(imageList, style.prompt);
         return {
           styleId: style.id,
           styleName: style.name,

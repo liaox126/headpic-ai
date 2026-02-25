@@ -1,19 +1,20 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Upload, X, ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, ImageIcon, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UploadZoneProps {
-  onImageSelect: (base64: string) => void;
-  preview: string | null;
+  onImagesSelect: (base64List: string[]) => void;
+  previews: string[];
   onClear: () => void;
+  maxPhotos?: number;
 }
 
 const MAX_SIZE = 10 * 1024 * 1024; // 10MB original file limit
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_DIMENSION = 1536; // Max width/height after resize
-const JPEG_QUALITY = 0.85; // Compression quality
+const MAX_DIMENSION = 1536;
+const JPEG_QUALITY = 0.85;
 
 function compressImage(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -25,7 +26,6 @@ function compressImage(file: File): Promise<string> {
 
       let { width, height } = img;
 
-      // Scale down if needed
       if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
         if (width > height) {
           height = Math.round((height * MAX_DIMENSION) / width);
@@ -48,7 +48,6 @@ function compressImage(file: File): Promise<string> {
 
       ctx.drawImage(img, 0, 0, width, height);
 
-      // Convert to JPEG base64
       const dataUrl = canvas.toDataURL("image/jpeg", JPEG_QUALITY);
       const base64 = dataUrl.split(",")[1];
       resolve(base64);
@@ -64,75 +63,122 @@ function compressImage(file: File): Promise<string> {
 }
 
 export default function UploadZone({
-  onImageSelect,
-  preview,
+  onImagesSelect,
+  previews,
   onClear,
+  maxPhotos = 3,
 }: UploadZoneProps) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
 
-  const processFile = useCallback(
-    async (file: File) => {
+  const processFiles = useCallback(
+    async (files: File[]) => {
       setError(null);
 
-      if (!ACCEPTED_TYPES.includes(file.type)) {
-        setError("Please upload a JPG, PNG, or WebP image.");
-        return;
+      const validFiles: File[] = [];
+      for (const file of files) {
+        if (!ACCEPTED_TYPES.includes(file.type)) {
+          setError("Please upload JPG, PNG, or WebP images.");
+          return;
+        }
+        if (file.size > MAX_SIZE) {
+          setError("Each image must be under 10MB.");
+          return;
+        }
+        validFiles.push(file);
       }
 
-      if (file.size > MAX_SIZE) {
-        setError("Image must be under 10MB.");
+      const totalPhotos = previews.length + validFiles.length;
+      if (totalPhotos > maxPhotos) {
+        setError(`Maximum ${maxPhotos} photos allowed. You already have ${previews.length}.`);
         return;
       }
 
       setProcessing(true);
       try {
-        const base64 = await compressImage(file);
-        onImageSelect(base64);
+        const newImages = await Promise.all(validFiles.map((f) => compressImage(f)));
+        onImagesSelect([...previews, ...newImages]);
       } catch {
         setError("Failed to process image. Please try another photo.");
       } finally {
         setProcessing(false);
       }
     },
-    [onImageSelect]
+    [onImagesSelect, previews, maxPhotos]
   );
+
+  const removePhoto = (index: number) => {
+    const updated = previews.filter((_, i) => i !== index);
+    if (updated.length === 0) {
+      onClear();
+    } else {
+      onImagesSelect(updated);
+    }
+  };
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setDragActive(false);
-      const file = e.dataTransfer.files[0];
-      if (file) processFile(file);
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) processFiles(files);
     },
-    [processFile]
+    [processFiles]
   );
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file) processFile(file);
+      const files = Array.from(e.target.files || []);
+      if (files.length > 0) processFiles(files);
+      // Reset input so the same file can be selected again
+      e.target.value = "";
     },
-    [processFile]
+    [processFiles]
   );
 
-  if (preview) {
+  if (previews.length > 0) {
     return (
-      <div className="relative mx-auto max-w-sm">
-        <img
-          src={`data:image/jpeg;base64,${preview}`}
-          alt="Upload preview"
-          className="w-full rounded-xl border-2 border-gold/30 shadow-lg"
-        />
-        <button
-          onClick={onClear}
-          className="absolute -top-3 -right-3 flex h-8 w-8 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-colors hover:bg-red-600"
-        >
-          <X className="h-4 w-4" />
-        </button>
+      <div>
+        <div className="flex flex-wrap gap-4 justify-center">
+          {previews.map((preview, index) => (
+            <div key={index} className="relative">
+              <img
+                src={`data:image/jpeg;base64,${preview}`}
+                alt={`Photo ${index + 1}`}
+                className="h-40 w-40 rounded-xl border-2 border-gold/30 object-cover shadow-lg sm:h-48 sm:w-48"
+              />
+              <button
+                onClick={() => removePhoto(index)}
+                className="absolute -top-2 -right-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-colors hover:bg-red-600"
+              >
+                <X className="h-3 w-3" />
+              </button>
+              {index === 0 && (
+                <span className="absolute bottom-2 left-2 rounded bg-gold/90 px-2 py-0.5 text-xs font-medium text-white">
+                  Main
+                </span>
+              )}
+            </div>
+          ))}
+
+          {previews.length < maxPhotos && (
+            <label className="flex h-40 w-40 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary/20 transition-all hover:border-gold/50 hover:bg-gold/5 sm:h-48 sm:w-48">
+              <Plus className="h-8 w-8 text-primary/30" />
+              <span className="mt-2 text-xs text-primary/40">Add photo</span>
+              <input
+                type="file"
+                className="hidden"
+                accept=".jpg,.jpeg,.png,.webp"
+                onChange={handleChange}
+              />
+            </label>
+          )}
+        </div>
         <p className="mt-3 text-center text-sm text-primary/50">
-          Photo uploaded successfully
+          {previews.length === 1
+            ? "Add more angles for better results (optional)"
+            : `${previews.length} photos uploaded — more angles = better likeness`}
         </p>
       </div>
     );
@@ -148,7 +194,7 @@ export default function UploadZone({
         onDragLeave={() => setDragActive(false)}
         onDrop={handleDrop}
         className={cn(
-          "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 transition-all",
+          "flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 sm:p-12 transition-all",
           dragActive
             ? "border-gold bg-gold/5"
             : "border-primary/20 bg-primary/5 hover:border-gold/50 hover:bg-gold/5",
@@ -164,20 +210,21 @@ export default function UploadZone({
             <Upload className="h-8 w-8 text-primary/40" />
           )}
         </div>
-        <p className="mb-1 text-lg font-medium text-primary">
+        <p className="mb-1 text-base sm:text-lg font-medium text-primary text-center">
           {processing
-            ? "Processing photo..."
+            ? "Processing photos..."
             : dragActive
-              ? "Drop your photo here"
-              : "Upload your photo"}
+              ? "Drop your photos here"
+              : "Upload your photo(s)"}
         </p>
-        <p className="text-sm text-primary/50">
-          Drag & drop or click to browse. JPG, PNG, WebP up to 10MB.
+        <p className="text-xs sm:text-sm text-primary/50 text-center">
+          Up to {maxPhotos} photos for better accuracy. JPG, PNG, WebP up to 10MB each.
         </p>
         <input
           type="file"
           className="hidden"
           accept=".jpg,.jpeg,.png,.webp"
+          multiple
           onChange={handleChange}
         />
       </label>

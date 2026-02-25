@@ -20,7 +20,7 @@ export default function GeneratePage() {
   const sessionId = searchParams.get("session_id");
   const adminKey = searchParams.get("admin");
 
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [images, setImages] = useState<string[]>([]);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [results, setResults] = useState<GenerateResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ export default function GeneratePage() {
   };
 
   const handleGenerate = async () => {
-    if (!imageBase64 || selectedStyles.length === 0) return;
+    if (images.length === 0 || selectedStyles.length === 0) return;
 
     setLoading(true);
     setError(null);
@@ -64,7 +64,7 @@ export default function GeneratePage() {
             ...(adminKey ? { "x-admin-key": adminKey } : {}),
           },
           body: JSON.stringify({
-            imageBase64,
+            images,
             styleIds: [style.id],
             sessionId: sessionId || undefined,
             adminKey: adminKey || undefined,
@@ -109,12 +109,12 @@ export default function GeneratePage() {
   };
 
   const handleClear = () => {
-    setImageBase64(null);
+    setImages([]);
     setResults([]);
     setError(null);
   };
 
-  const canGenerate = imageBase64 && selectedStyles.length > 0 && !loading;
+  const canGenerate = images.length > 0 && selectedStyles.length > 0 && !loading;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-primary/5 to-white">
@@ -250,8 +250,8 @@ export default function GeneratePage() {
                 <h2 className="text-xl font-bold text-primary">Upload Your Photo</h2>
               </div>
               <UploadZone
-                onImageSelect={setImageBase64}
-                preview={imageBase64}
+                onImagesSelect={setImages}
+                previews={images}
                 onClear={handleClear}
               />
             </section>
@@ -291,10 +291,10 @@ export default function GeneratePage() {
                 <Sparkles className="h-5 w-5" />
                 {isPaid ? "Generate Headshots" : "Generate Free Preview"}
               </button>
-              {!imageBase64 && (
+              {images.length === 0 && (
                 <p className="mt-3 text-sm text-primary/40">Upload a photo to get started</p>
               )}
-              {imageBase64 && selectedStyles.length === 0 && (
+              {images.length > 0 && selectedStyles.length === 0 && (
                 <p className="mt-3 text-sm text-primary/40">Select {isPaid ? "at least one style" : "a style"}</p>
               )}
             </div>

@@ -26,15 +26,17 @@ export async function POST(req: NextRequest) {
     const session = event.data.object;
     const planId = session.metadata?.planId;
     const headshots = session.metadata?.headshots;
+    const maxStyles = session.metadata?.maxStyles;
 
     if (planId && headshots) {
       await storeCredits(
         session.id,
         planId,
-        parseInt(headshots, 10)
+        parseInt(headshots, 10),
+        maxStyles ? parseInt(maxStyles, 10) : 5
       );
       console.log(
-        `Credits stored: session=${session.id}, plan=${planId}, headshots=${headshots}`
+        `Credits stored: session=${session.id}, plan=${planId}, headshots=${headshots}, maxStyles=${maxStyles || 5}`
       );
     }
   }

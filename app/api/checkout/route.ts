@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         planId,
         headshots: String(plan.headshots),
-        styles: String(plan.styles),
+        maxStyles: String(plan.styles),
       },
     });
 

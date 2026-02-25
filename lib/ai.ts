@@ -1,7 +1,25 @@
 export async function generateHeadshot(
-  imageBase64: string,
+  images: string[],
   stylePrompt: string
 ): Promise<string> {
+  // Build content array: prompt text + all reference images
+  const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+    { type: "text", text: stylePrompt },
+  ];
+
+  // Add all reference images
+  for (const imageBase64 of images) {
+    content.push({
+      type: "image_url",
+      image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
+    });
+  }
+
+  // If multiple images, prepend instruction
+  if (images.length > 1) {
+    content[0].text = `I'm providing ${images.length} reference photos of the same person from different angles. Use ALL of them to accurately capture this person's appearance.\n\n${stylePrompt}`;
+  }
+
   const response = await fetch(
     `${process.env.AI_API_BASE_URL}/chat/completions`,
     {
@@ -15,13 +33,7 @@ export async function generateHeadshot(
         messages: [
           {
             role: "user",
-            content: [
-              { type: "text", text: stylePrompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:image/jpeg;base64,${imageBase64}` },
-              },
-            ],
+            content,
           },
         ],
         max_tokens: 4096,
@@ -35,14 +47,26 @@ export async function generateHeadshot(
   }
 
   const data = await response.json();
-  const content = data.choices?.[0]?.message?.content;
+  const message = data.choices?.[0]?.message;
 
-  if (!content) {
-    throw new Error("No content in AI response");
+  if (!message) {
+    throw new Error("No message in AI response");
   }
 
+  // Check for inline_data parts (Gemini native format via relay)
+  if (Array.isArray(message.content)) {
+    for (const part of message.content) {
+      if (part.type === "image_url" && part.image_url?.url) {
+        const match = part.image_url.url.match(/^data:image\/[a-z]+;base64,(.+)/);
+        if (match) return match[1];
+      }
+    }
+  }
+
+  const content_str = typeof message.content === "string" ? message.content : JSON.stringify(message.content);
+
   // Parse markdown image format: ![image](data:image/png;base64,...)
-  const match = content.match(
+  const match = content_str.match(
     /!\[.*?\]\(data:image\/[a-z]+;base64,([A-Za-z0-9+/=]+)\)/
   );
   if (match && match[1]) {
@@ -50,7 +74,7 @@ export async function generateHeadshot(
   }
 
   // Fallback: try to extract raw base64 if no markdown wrapper
-  const base64Match = content.match(
+  const base64Match = content_str.match(
     /data:image\/[a-z]+;base64,([A-Za-z0-9+/=]+)/
   );
   if (base64Match && base64Match[1]) {
