@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://headpic.ai/sitemap.xml

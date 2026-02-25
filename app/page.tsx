@@ -37,8 +37,8 @@ export default function Home() {
             Ready for Your New <span className="text-gold">Headshot</span>?
           </h2>
           <p className="mb-8 text-white/60">
-            Get a polished, professional headshot in under 60 seconds —
-            no photographer, no studio, no hassle.
+            Get your professional headshot in 60 seconds — no photographer,
+            no studio, no hassle.
           </p>
           <Link
             href="/generate"
