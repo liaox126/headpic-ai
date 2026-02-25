@@ -3,25 +3,25 @@ import Image from "next/image";
 const comparisons = [
   {
     before: {
-      src: "/samples/before.jpg",
-      alt: "Casual selfie",
+      src: "/samples/male-before.jpg",
+      alt: "Casual male photo",
     },
     after: {
-      src: "/samples/after-corporate.jpg",
+      src: "/samples/male-after.jpg",
       alt: "Corporate professional headshot",
     },
     style: "Corporate",
   },
   {
     before: {
-      src: "/samples/before.jpg",
-      alt: "Casual selfie",
+      src: "/samples/female-before.jpg",
+      alt: "Casual female photo",
     },
     after: {
-      src: "/samples/after-creative.jpg",
-      alt: "Creative professional headshot",
+      src: "/samples/female-after.jpg",
+      alt: "Business Casual professional headshot",
     },
-    style: "Creative",
+    style: "Business Casual",
   },
 ];
 
