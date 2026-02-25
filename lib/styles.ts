@@ -5,40 +5,51 @@ export interface Style {
   prompt: string;
 }
 
+// Core identity preservation instruction - shared across all styles
+const IDENTITY_ANCHOR = `Using the provided photo as reference, edit ONLY the clothing, background, and lighting. 
+You MUST preserve the person's exact facial structure, skin tone, skin texture, eye shape, eye color, nose shape, lip shape, jawline, face proportions, facial hair (if any), hairstyle, hair color, glasses (if any), moles, freckles, and all distinguishing facial features exactly as they appear. 
+Do NOT smooth, beautify, or alter the face in any way. The result must look like the exact same person photographed in a different setting. 
+Keep the face same, keep the skin tone same, do not change skin texture.`;
+
 export const styles: Style[] = [
   {
     id: "corporate",
     name: "Corporate",
     description: "Classic professional look with suit and tie",
-    prompt:
-      'Transform this photo into a professional corporate headshot. Keep the person\'s face, glasses (if any), hairstyle, and all facial features EXACTLY the same - this must be clearly recognizable as the same person. Detect the person\'s gender from the photo and dress them appropriately: male in a dark navy suit with white dress shirt and subtle tie; female in a tailored dark navy blazer with a professional white or light-colored top. Do not add jewelry or accessories unless already present in the original photo. Soft neutral gray studio background, professional studio lighting with soft shadows, sharp focus, high resolution. Crop to head and shoulders only. The person should look confident and approachable. Output only the image.',
+    prompt: `${IDENTITY_ANCHOR}
+Change only the clothing and background: dress the person in gender-appropriate professional attire — male: dark navy suit with white dress shirt and subtle tie; female: tailored dark navy blazer with professional white top. Do not add any accessories not in the original photo.
+Set against a soft neutral gray studio background with professional three-point lighting creating gentle shadows. Photorealistic close-up portrait, head and shoulders only, captured with an 85mm portrait lens, sharp focus. The person looks confident and approachable. Output only the image.`,
   },
   {
     id: "business-casual",
     name: "Business Casual",
     description: "Relaxed professional with modern office vibe",
-    prompt:
-      'Transform this photo into a professional business casual headshot. Keep the person\'s face, glasses (if any), hairstyle, and all facial features EXACTLY the same - this must be clearly recognizable as the same person. Detect the person\'s gender from the photo and dress them appropriately: male in a light blue oxford shirt with no tie, top button undone; female in a smart casual blouse or lightweight knit top in soft blue or neutral tones. Do not add jewelry or accessories unless already present in the original photo. Modern office environment slightly blurred in background with warm lighting, natural and relaxed expression, soft professional lighting. Crop to head and shoulders only. Output only the image.',
+    prompt: `${IDENTITY_ANCHOR}
+Change only the clothing and background: dress the person in gender-appropriate business casual — male: light blue oxford shirt, no tie, top button undone; female: smart casual blouse or lightweight knit in soft blue or neutral tones. Do not add any accessories not in the original photo.
+Set in a modern office environment, slightly blurred in the background with warm natural lighting. Photorealistic close-up portrait, head and shoulders only, captured with an 85mm portrait lens. Natural, relaxed expression. Output only the image.`,
   },
   {
     id: "creative",
     name: "Creative",
     description: "Artistic style with warm tones and bokeh",
-    prompt:
-      'Transform this photo into a creative professional headshot. Keep the person\'s face, glasses (if any), hairstyle, and all facial features EXACTLY the same - this must be clearly recognizable as the same person. Detect the person\'s gender from the photo and dress them in a gender-appropriate dark crew neck or turtleneck sweater that looks natural for their appearance. Do not add jewelry or accessories unless already present in the original photo. Warm bokeh background with soft golden tones, artistic lighting with slight rim light, confident relaxed expression, modern tech company style. Crop to head and shoulders only. Output only the image.',
+    prompt: `${IDENTITY_ANCHOR}
+Change only the clothing and background: dress the person in a gender-appropriate dark crew neck or turtleneck sweater. Do not add any accessories not in the original photo.
+Set against a warm bokeh background with soft golden tones. Artistic rim lighting from behind, creating a subtle glow around the shoulders. Photorealistic close-up portrait, head and shoulders only, modern tech company aesthetic. Output only the image.`,
   },
   {
     id: "startup",
     name: "Startup",
     description: "Clean minimal Silicon Valley founder look",
-    prompt:
-      'Transform this photo into a startup founder headshot. Keep the person\'s face, glasses (if any), hairstyle, and all facial features EXACTLY the same - this must be clearly recognizable as the same person. Detect the person\'s gender from the photo and dress them in a clean, simple black t-shirt or fitted black top appropriate for their appearance. Do not add jewelry or accessories unless already present in the original photo. Clean white or very light background, bright even lighting, friendly confident smile, Silicon Valley startup vibe, clean and minimal. Crop to head and shoulders only. Output only the image.',
+    prompt: `${IDENTITY_ANCHOR}
+Change only the clothing and background: dress the person in a clean, simple black t-shirt or fitted black top appropriate for their gender. Do not add any accessories not in the original photo.
+Set against a clean white or very light background with bright, even studio lighting. Photorealistic close-up portrait, head and shoulders only, Silicon Valley startup founder aesthetic, clean and minimal. Friendly confident expression. Output only the image.`,
   },
   {
     id: "formal",
     name: "Formal",
     description: "Executive portrait with dramatic lighting",
-    prompt:
-      'Transform this photo into a formal executive headshot. Keep the person\'s face, glasses (if any), hairstyle, and all facial features EXACTLY the same - this must be clearly recognizable as the same person. Detect the person\'s gender from the photo and dress them appropriately: male in a charcoal gray three-piece suit with white shirt and dark tie; female in an elegant charcoal gray blazer with a refined silk or satin top. Do not add jewelry or accessories unless already present in the original photo. Deep blue gradient studio background, dramatic professional lighting, authoritative but approachable expression. Crop to head and shoulders only. Output only the image.',
+    prompt: `${IDENTITY_ANCHOR}
+Change only the clothing and background: dress the person in gender-appropriate formal executive attire — male: charcoal gray three-piece suit with white shirt and dark tie; female: elegant charcoal gray blazer with refined silk top. Do not add any accessories not in the original photo.
+Set against a deep blue gradient studio background with dramatic professional lighting creating depth. Photorealistic close-up portrait, head and shoulders only, captured with an 85mm portrait lens. Authoritative but approachable expression. Output only the image.`,
   },
 ];
