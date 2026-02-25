@@ -1,4 +1,15 @@
-import { kv } from "@vercel/kv";
+import { createClient } from "redis";
+
+let redisClient: ReturnType<typeof createClient> | null = null;
+
+async function getRedis() {
+  if (!redisClient) {
+    redisClient = createClient({ url: process.env.REDIS_URL });
+    redisClient.on("error", (err) => console.error("Redis error:", err));
+    await redisClient.connect();
+  }
+  return redisClient;
+}
 
 export interface Credits {
   plan: string;
@@ -14,22 +25,25 @@ export async function storeCredits(
   plan: string,
   total: number
 ): Promise<void> {
+  const redis = await getRedis();
   const credits: Credits = {
     plan,
     remaining: total,
     total,
     createdAt: new Date().toISOString(),
   };
-  await kv.set(`credits:${sessionId}`, credits, {
-    ex: CREDITS_TTL,
+  await redis.set(`credits:${sessionId}`, JSON.stringify(credits), {
+    EX: CREDITS_TTL,
   });
 }
 
 export async function getCredits(
   sessionId: string
 ): Promise<Credits | null> {
-  const data = await kv.get<Credits>(`credits:${sessionId}`);
-  return data ?? null;
+  const redis = await getRedis();
+  const data = await redis.get(`credits:${sessionId}`);
+  if (!data) return null;
+  return JSON.parse(data);
 }
 
 export async function deductCredits(
@@ -40,8 +54,9 @@ export async function deductCredits(
   if (!credits || credits.remaining < count) return null;
 
   credits.remaining -= count;
-  await kv.set(`credits:${sessionId}`, credits, {
-    ex: CREDITS_TTL,
+  const redis = await getRedis();
+  await redis.set(`credits:${sessionId}`, JSON.stringify(credits), {
+    EX: CREDITS_TTL,
   });
   return credits;
 }
@@ -50,12 +65,14 @@ export async function deductCredits(
 const FREE_TRIAL_KEY = "free_trial";
 
 export async function hasUsedFreeTrial(ip: string): Promise<boolean> {
-  const used = await kv.get<string>(`${FREE_TRIAL_KEY}:${ip}`);
+  const redis = await getRedis();
+  const used = await redis.get(`${FREE_TRIAL_KEY}:${ip}`);
   return !!used;
 }
 
 export async function markFreeTrialUsed(ip: string): Promise<void> {
-  await kv.set(`${FREE_TRIAL_KEY}:${ip}`, "1", {
-    ex: 30 * 24 * 60 * 60, // 30 days
+  const redis = await getRedis();
+  await redis.set(`${FREE_TRIAL_KEY}:${ip}`, "1", {
+    EX: 30 * 24 * 60 * 60,
   });
 }
