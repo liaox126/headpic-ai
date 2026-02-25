@@ -150,7 +150,7 @@ export default function GeneratePage() {
         {/* Results view */}
         {results.length > 0 ? (
           <div>
-            <ResultGrid results={results} />
+            <ResultGrid results={results} isFreePreview={!isPaid} />
             <div className="mt-8 flex justify-center gap-4">
               {isPaid && remaining !== null && remaining > 0 && (
                 <button
