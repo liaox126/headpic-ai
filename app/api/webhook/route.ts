@@ -1,42 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStripe } from "@/lib/stripe";
-
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "";
+import { getStripe, PLANS } from "@/lib/stripe";
+import { storeCredits } from "@/lib/kv";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature");
 
-  if (!sig) {
-    return NextResponse.json({ error: "No signature" }, { status: 400 });
+  if (!sig || !process.env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
   }
 
+  let event;
   try {
-    const event = getStripe().webhooks.constructEvent(body, sig, endpointSecret);
-
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        console.log("✅ Payment completed:", {
-          sessionId: session.id,
-          planId: session.metadata?.planId,
-          headshots: session.metadata?.headshots,
-          email: session.customer_details?.email,
-        });
-        // TODO: Store payment record in database
-        // TODO: Send confirmation email
-        break;
-      }
-      default:
-        console.log(`Unhandled event: ${event.type}`);
-    }
-
-    return NextResponse.json({ received: true });
-  } catch (err) {
-    console.error("Webhook error:", err);
-    return NextResponse.json(
-      { error: "Webhook verification failed" },
-      { status: 400 }
+    event = getStripe().webhooks.constructEvent(
+      body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
     );
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
+
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const planId = session.metadata?.planId;
+    const headshots = session.metadata?.headshots;
+
+    if (planId && headshots) {
+      await storeCredits(
+        session.id,
+        planId,
+        parseInt(headshots, 10)
+      );
+      console.log(
+        `Credits stored: session=${session.id}, plan=${planId}, headshots=${headshots}`
+      );
+    }
+  }
+
+  return NextResponse.json({ received: true });
 }

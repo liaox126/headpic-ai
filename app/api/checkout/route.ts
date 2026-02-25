@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `HeadPic.ai ${plan.name}`,
+              name: `HeadPic ${plan.name}`,
               description: `${plan.headshots} AI headshots, ${plan.styles} styles`,
             },
             unit_amount: plan.price,
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${req.nextUrl.origin}/generate?paid=true&plan=${planId}`,
+      success_url: `${req.nextUrl.origin}/generate?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.nextUrl.origin}/#pricing`,
       metadata: {
         planId,
