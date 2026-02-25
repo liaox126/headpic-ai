@@ -1,9 +1,4 @@
-import { createClient } from "@vercel/kv";
-
-const kv = createClient({
-  url: process.env.KV_REST_API_URL!,
-  token: process.env.KV_REST_API_TOKEN!,
-});
+import { kv } from "@vercel/kv";
 
 export interface Credits {
   plan: string;
@@ -25,7 +20,7 @@ export async function storeCredits(
     total,
     createdAt: new Date().toISOString(),
   };
-  await kv.set(`credits:${sessionId}`, JSON.stringify(credits), {
+  await kv.set(`credits:${sessionId}`, credits, {
     ex: CREDITS_TTL,
   });
 }
@@ -33,9 +28,8 @@ export async function storeCredits(
 export async function getCredits(
   sessionId: string
 ): Promise<Credits | null> {
-  const data = await kv.get<string>(`credits:${sessionId}`);
-  if (!data) return null;
-  return typeof data === "string" ? JSON.parse(data) : data;
+  const data = await kv.get<Credits>(`credits:${sessionId}`);
+  return data ?? null;
 }
 
 export async function deductCredits(
@@ -46,7 +40,7 @@ export async function deductCredits(
   if (!credits || credits.remaining < count) return null;
 
   credits.remaining -= count;
-  await kv.set(`credits:${sessionId}`, JSON.stringify(credits), {
+  await kv.set(`credits:${sessionId}`, credits, {
     ex: CREDITS_TTL,
   });
   return credits;
