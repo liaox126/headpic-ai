@@ -20,19 +20,19 @@ export const PLANS = {
   starter: {
     name: "Starter",
     price: 990,
-    headshots: 8,
+    headshots: 5,
     styles: 2,
   },
   pro: {
     name: "Pro",
     price: 1990,
-    headshots: 20,
+    headshots: 10,
     styles: 5,
   },
   ultimate: {
     name: "Ultimate",
     price: 2990,
-    headshots: 40,
+    headshots: 20,
     styles: 5,
   },
 } as const;
