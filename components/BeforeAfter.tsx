@@ -3,23 +3,25 @@ import Image from "next/image";
 const comparisons = [
   {
     before: {
-      src: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop&crop=face",
-      alt: "Casual male selfie",
+      src: "/samples/before.jpg",
+      alt: "Casual selfie",
     },
     after: {
-      src: "https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400&h=400&fit=crop&crop=face",
-      alt: "Professional male headshot",
+      src: "/samples/after-corporate.jpg",
+      alt: "Corporate professional headshot",
     },
+    style: "Corporate",
   },
   {
     before: {
-      src: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop&crop=face",
-      alt: "Casual female selfie",
+      src: "/samples/before.jpg",
+      alt: "Casual selfie",
     },
     after: {
-      src: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop&crop=face",
-      alt: "Professional female headshot",
+      src: "/samples/after-creative.jpg",
+      alt: "Creative professional headshot",
     },
+    style: "Creative",
   },
 ];
 
@@ -50,14 +52,16 @@ export default function BeforeAfter() {
                     fill
                     className="object-cover"
                     sizes="180px"
-                    unoptimized
                   />
                 </div>
               </div>
 
               {/* Arrow */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gold text-white">
-                <span className="text-lg font-bold">→</span>
+              <div className="flex shrink-0 flex-col items-center gap-1">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gold text-white">
+                  <span className="text-lg font-bold">→</span>
+                </div>
+                <span className="text-xs font-medium text-gold">{pair.style}</span>
               </div>
 
               {/* After */}
@@ -72,7 +76,6 @@ export default function BeforeAfter() {
                     fill
                     className="object-cover"
                     sizes="180px"
-                    unoptimized
                   />
                 </div>
               </div>
@@ -81,7 +84,7 @@ export default function BeforeAfter() {
         </div>
 
         <p className="mt-8 text-center text-xs text-primary/30">
-          Demo images shown. Results vary based on input photo quality.
+          Real AI-generated results. Output quality depends on input photo.
         </p>
       </div>
     </section>
