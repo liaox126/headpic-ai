@@ -1,6 +1,7 @@
 import Hero from "@/components/Hero";
 import BeforeAfter from "@/components/BeforeAfter";
 import StylePreview from "@/components/StylePreviewLanding";
+import Testimonials from "@/components/Testimonials";
 import PricingSection from "@/components/PricingSection";
 import FAQ from "@/components/FAQ";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export default function Home() {
       <Hero />
       <BeforeAfter />
       <StylePreview />
+      <Testimonials />
       <PricingSection />
       <FAQ />
 
