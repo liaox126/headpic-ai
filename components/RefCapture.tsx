@@ -1,17 +1,24 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function RefCapture() {
-  const searchParams = useSearchParams();
-
+function RefCaptureInner() {
   useEffect(() => {
-    const ref = searchParams.get("ref");
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
     if (ref) {
       localStorage.setItem("hp_ref", ref);
     }
-  }, [searchParams]);
+  }, []);
 
   return null;
+}
+
+export default function RefCapture() {
+  return (
+    <Suspense>
+      <RefCaptureInner />
+    </Suspense>
+  );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
@@ -120,7 +120,15 @@ export default function SuccessPage() {
         </div>
       </header>
 
-      <SuccessContent />
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gold border-t-transparent" />
+          </div>
+        }
+      >
+        <SuccessContent />
+      </Suspense>
     </main>
   );
 }
