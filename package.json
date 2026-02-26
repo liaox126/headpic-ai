@@ -15,10 +15,12 @@
   "dependencies": {
     "@stripe/stripe-js": "^8.8.0",
     "@tailwindcss/postcss": "^4.2.1",
+    "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^25.3.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "autoprefixer": "^10.4.24",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.575.0",

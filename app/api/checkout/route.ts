@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${req.nextUrl.origin}/generate?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${req.nextUrl.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${req.nextUrl.origin}/#pricing`,
       metadata: {
         planId,
