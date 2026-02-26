@@ -5,12 +5,14 @@ import Testimonials from "@/components/Testimonials";
 import PricingSection from "@/components/PricingSection";
 import FAQ from "@/components/FAQ";
 import EmailCapture from "@/components/EmailCapture";
+import RefCapture from "@/components/RefCapture";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
     <main>
+      <RefCapture />
       {/* Header */}
       <header className="absolute top-0 z-10 w-full">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">

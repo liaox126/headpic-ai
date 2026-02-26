@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2, Sparkles, CreditCard, Zap, Check, Crown } from "luc
 import UploadZone from "@/components/UploadZone";
 import StylePicker from "@/components/StylePicker";
 import ResultGrid from "@/components/ResultGrid";
+import ShareReferral from "@/components/ShareReferral";
 import { styles } from "@/lib/styles";
 
 interface GenerateResult {
@@ -313,6 +314,11 @@ export default function GeneratePage() {
               </button>
             </div>
           </div>
+        )}
+
+        {/* Share & Referral */}
+        {!loading && results.length > 0 && (
+          <ShareReferral />
         )}
 
         {/* Show upload/style picker when not loading and no results */}
