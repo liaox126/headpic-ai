@@ -4,6 +4,7 @@ import StylePreview from "@/components/StylePreviewLanding";
 import Testimonials from "@/components/Testimonials";
 import PricingSection from "@/components/PricingSection";
 import FAQ from "@/components/FAQ";
+import EmailCapture from "@/components/EmailCapture";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
@@ -31,6 +32,7 @@ export default function Home() {
       <Testimonials />
       <PricingSection />
       <FAQ />
+      <EmailCapture />
 
       {/* Final CTA */}
       <section className="bg-primary py-20">
