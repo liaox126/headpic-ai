@@ -2,11 +2,21 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateHeadshot } from "@/lib/ai";
 import { styles } from "@/lib/styles";
 import { getCredits, deductCredits, hasUsedFreeTrial, markFreeTrialUsed } from "@/lib/kv";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limiting: 10 requests per minute per IP
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const rl = rateLimit(`generate:${ip}`, 10, 60 * 1000);
+    if (!rl.success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment and try again." },
+        { status: 429 }
+      );
+    }
     const body = await req.json();
     const { images, imageBase64, styleIds, sessionId } = body;
 

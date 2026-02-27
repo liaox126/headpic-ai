@@ -9,6 +9,7 @@ const plans = [
     id: "starter",
     name: "Starter",
     price: "$9.9",
+    originalPrice: "$19",
     description: "Perfect for trying it out",
     features: ["5 AI headshots", "2 styles", "HD quality", "60s delivery"],
     highlighted: false,
@@ -17,6 +18,7 @@ const plans = [
     id: "pro",
     name: "Pro",
     price: "$19.9",
+    originalPrice: "$39",
     description: "Most popular choice",
     features: [
       "10 AI headshots",
@@ -31,6 +33,7 @@ const plans = [
     id: "ultimate",
     name: "Ultimate",
     price: "$29.9",
+    originalPrice: "$59",
     description: "For teams and professionals",
     features: [
       "20 AI headshots",
@@ -101,6 +104,11 @@ export default function PricingSection() {
                   {plan.price}
                 </span>
                 <span className="text-primary/40"> / one-time</span>
+                {plan.originalPrice && (
+                  <span className="ml-2 text-lg text-primary/30 line-through">
+                    {plan.originalPrice}
+                  </span>
+                )}
               </div>
 
               <ul className="mb-8 flex-1 space-y-3">
