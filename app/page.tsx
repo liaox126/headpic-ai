@@ -8,10 +8,107 @@ import EmailCapture from "@/components/EmailCapture";
 import RefCapture from "@/components/RefCapture";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import Script from "next/script";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      name: "HeadPic",
+      url: "https://headpic.site",
+      description:
+        "Transform your selfie into studio-quality professional headshots with AI.",
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "HeadPic — AI Headshot Generator",
+      applicationCategory: "PhotographyApplication",
+      operatingSystem: "Web",
+      url: "https://headpic.site",
+      description:
+        "Transform your selfie into studio-quality professional headshots with AI. Perfect for LinkedIn, resumes, and corporate profiles.",
+      offers: [
+        {
+          "@type": "Offer",
+          name: "Starter",
+          price: "9.90",
+          priceCurrency: "USD",
+          description: "5 AI headshots, 2 styles, HD quality",
+        },
+        {
+          "@type": "Offer",
+          name: "Pro",
+          price: "19.90",
+          priceCurrency: "USD",
+          description: "10 AI headshots, all 5 styles, HD quality",
+        },
+        {
+          "@type": "Offer",
+          name: "Ultimate",
+          price: "29.90",
+          priceCurrency: "USD",
+          description: "20 AI headshots, all 5 styles, 4K quality, priority support",
+        },
+      ],
+      screenshot: "https://headpic.site/og-image.png",
+    },
+    {
+      "@type": "FAQPage",
+      mainEntity: [
+        {
+          "@type": "Question",
+          name: "How does AI headshot generation work?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Simply upload a clear selfie, choose your preferred styles, and our AI will transform your photo into professional headshots. The AI preserves your facial features while enhancing the overall look with professional lighting, backgrounds, and attire.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "How long does it take to generate headshots?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Most headshots are generated within 60 seconds. The exact time depends on the number of styles selected and current server load.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "What kind of photo should I upload?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Upload a clear, well-lit selfie or portrait photo. Make sure your face is clearly visible, facing the camera. Avoid heavy filters, sunglasses, or group photos. JPG, PNG, and WebP formats are supported up to 10MB.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "Can I use these headshots professionally?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Absolutely! Our AI headshots are designed for professional use — LinkedIn profiles, company websites, resumes, email signatures, and more. You own full rights to the generated images.",
+          },
+        },
+        {
+          "@type": "Question",
+          name: "What if I'm not satisfied with the results?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "You can re-generate headshots with different styles at no extra cost within your plan limits. Our AI continuously improves, and most users are thrilled with their results on the first try.",
+          },
+        },
+      ],
+    },
+  ],
+};
 
 export default function Home() {
   return (
     <main>
+      <Script
+        id="structured-data"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <RefCapture />
       {/* Header */}
       <header className="absolute top-0 z-10 w-full">

@@ -39,6 +39,25 @@ export default function Hero() {
         <p className="mt-4 text-sm text-white/50">
           No sign-up required. Try it free.
         </p>
+
+        {/* Social proof */}
+        <div className="mt-10 flex items-center justify-center gap-6 text-sm text-white/50 sm:gap-8">
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-gold">2,400+</span>
+            <span>headshots generated</span>
+          </div>
+          <div className="hidden h-4 w-px bg-white/20 sm:block" />
+          <div className="flex items-center gap-2">
+            <span className="text-lg font-bold text-gold">60s</span>
+            <span>average delivery</span>
+          </div>
+          <div className="hidden h-4 w-px bg-white/20 sm:block" />
+          <div className="flex items-center gap-1">
+            <span className="text-lg font-bold text-gold">4.8</span>
+            <span>★</span>
+            <span className="hidden sm:inline">rating</span>
+          </div>
+        </div>
       </div>
     </section>
   );
