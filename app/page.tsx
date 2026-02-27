@@ -59,6 +59,19 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-primary/10 bg-white py-8">
         <div className="mx-auto max-w-6xl px-4 text-center text-sm text-primary/40">
+          <div className="mb-2 flex items-center justify-center gap-4">
+            <Link href="/privacy" className="hover:text-primary/60 transition-colors">
+              Privacy Policy
+            </Link>
+            <span>·</span>
+            <Link href="/terms" className="hover:text-primary/60 transition-colors">
+              Terms of Service
+            </Link>
+            <span>·</span>
+            <Link href="/blog" className="hover:text-primary/60 transition-colors">
+              Blog
+            </Link>
+          </div>
           &copy; {new Date().getFullYear()} HeadPic. All rights reserved.
         </div>
       </footer>
