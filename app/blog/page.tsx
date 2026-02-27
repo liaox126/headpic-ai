@@ -9,6 +9,14 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "ai-headshot-vs-photographer",
+    title: "AI Headshots vs Professional Photographer: Cost & Quality Compared (2026)",
+    excerpt:
+      "How do AI headshot generators compare to hiring a professional photographer? We break down cost, quality, speed, and convenience.",
+    date: "Feb 27, 2026",
+    readTime: "6 min read",
+  },
+  {
     slug: "best-ai-headshot-generators",
     title: "7 Best AI Headshot Generators in 2026 (Honest Comparison)",
     excerpt:
