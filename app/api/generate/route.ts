@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { generateHeadshot } from "@/lib/ai";
 import { styles, buildPrompt } from "@/lib/styles";
 import { getCredits, deductCredits, hasUsedFreeTrial, markFreeTrialUsed } from "@/lib/kv";
+import { getUserByEmail, deductUserCredits } from "@/lib/user";
 import { rateLimit } from "@/lib/rate-limit";
 
 export const maxDuration = 120;
@@ -19,6 +20,9 @@ export async function POST(req: NextRequest) {
     }
     const body = await req.json();
     const { images, imageBase64, styleIds, sessionId, enhance } = body;
+
+    // Check for logged-in user via middleware header
+    const userEmail = req.headers.get("x-user-email");
 
     // Support both new multi-image format and legacy single image
     const imageList: string[] = Array.isArray(images) && images.length > 0
@@ -58,16 +62,58 @@ export async function POST(req: NextRequest) {
 
     let isFreePreview = false;
     let remaining = 0;
+    let creditSource: "user" | "session" | "admin" | "free" = "free";
 
     // Admin bypass for testing
     const adminKey = req.headers.get("x-admin-key") || body.adminKey;
     const isAdmin = adminKey && adminKey === process.env.ADMIN_SECRET;
 
     if (isAdmin) {
-      // Skip all credit checks for admin testing
-      isFreePreview = false;
+      creditSource = "admin";
+    } else if (userEmail) {
+      // Logged-in user - check user account credits first
+      const user = await getUserByEmail(userEmail);
+      if (user && user.credits.remaining > 0) {
+        creditSource = "user";
+
+        const maxStyles = user.credits.maxStyles || 5;
+        if (styleIds.length > maxStyles) {
+          return NextResponse.json(
+            {
+              error: `Your ${user.plan} plan allows ${maxStyles} styles. Please select fewer styles.`,
+              code: "STYLE_LIMIT",
+              maxStyles,
+            },
+            { status: 403 }
+          );
+        }
+
+        if (user.credits.remaining < styleIds.length) {
+          return NextResponse.json(
+            {
+              error: `Not enough credits. You have ${user.credits.remaining} remaining but selected ${styleIds.length} styles.`,
+              code: "INSUFFICIENT_CREDITS",
+              remaining: user.credits.remaining,
+            },
+            { status: 403 }
+          );
+        }
+
+        const updated = await deductUserCredits(userEmail, styleIds.length);
+        remaining = updated?.credits.remaining ?? 0;
+      } else if (sessionId) {
+        // Fall back to session-based credits
+        creditSource = "session";
+      } else {
+        // Logged-in user with no credits - free preview
+        creditSource = "free";
+      }
     } else if (sessionId) {
-      // Paid user - verify credits
+      creditSource = "session";
+    }
+
+    // Handle session-based credits
+    if (creditSource === "session") {
       const credits = await getCredits(sessionId);
       if (!credits) {
         return NextResponse.json(
@@ -76,7 +122,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Enforce style limit per plan
       const maxStyles = credits.maxStyles || 5;
       if (styleIds.length > maxStyles) {
         return NextResponse.json(
@@ -100,11 +145,12 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // Deduct credits
       const updated = await deductCredits(sessionId, styleIds.length);
       remaining = updated?.remaining ?? 0;
-    } else {
-      // Free preview - limit to 1 style, 1 per IP
+    }
+
+    // Handle free preview
+    if (creditSource === "free") {
       if (styleIds.length > 1) {
         return NextResponse.json(
           { error: "Free preview allows 1 style only. Purchase a plan for more.", code: "FREE_LIMIT" },
@@ -112,7 +158,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
       const used = await hasUsedFreeTrial(ip);
       if (used) {
         return NextResponse.json(
@@ -122,7 +167,6 @@ export async function POST(req: NextRequest) {
       }
 
       isFreePreview = true;
-      // Mark free trial as used after generation succeeds (below)
     }
 
     if (styleIds.length > 5) {
@@ -168,13 +212,14 @@ export async function POST(req: NextRequest) {
 
     // Mark free trial used only on success
     if (isFreePreview && successResults.length > 0) {
-      const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
       await markFreeTrialUsed(ip);
     }
 
+    const isPaid = creditSource === "user" || creditSource === "session" || creditSource === "admin";
+
     return NextResponse.json({
       results: successResults,
-      remaining: sessionId ? remaining : 0,
+      remaining: isPaid ? remaining : 0,
       isFreePreview,
       failed: failedResults.length > 0
         ? failedResults.map((r) => ({ styleId: r.styleId, error: (r as Record<string, unknown>).error }))

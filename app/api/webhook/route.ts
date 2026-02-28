@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe, PLANS } from "@/lib/stripe";
 import { storeCredits } from "@/lib/kv";
+import { updateUserCredits } from "@/lib/user";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -27,17 +28,26 @@ export async function POST(req: NextRequest) {
     const planId = session.metadata?.planId;
     const headshots = session.metadata?.headshots;
     const maxStyles = session.metadata?.maxStyles;
+    const userEmail = session.metadata?.userEmail || session.client_reference_id;
 
     if (planId && headshots) {
-      await storeCredits(
-        session.id,
-        planId,
-        parseInt(headshots, 10),
-        maxStyles ? parseInt(maxStyles, 10) : 5
-      );
-      console.log(
-        `Credits stored: session=${session.id}, plan=${planId}, headshots=${headshots}, maxStyles=${maxStyles || 5}`
-      );
+      const headshotCount = parseInt(headshots, 10);
+      const maxStyleCount = maxStyles ? parseInt(maxStyles, 10) : 5;
+
+      // Always store session-based credits (legacy support + success page)
+      await storeCredits(session.id, planId, headshotCount, maxStyleCount);
+
+      // If user email is present, also add credits to user account
+      if (userEmail && userEmail.includes("@")) {
+        await updateUserCredits(userEmail, planId, headshotCount, maxStyleCount);
+        console.log(
+          `Credits stored: session=${session.id}, user=${userEmail}, plan=${planId}, headshots=${headshots}, maxStyles=${maxStyles || 5}`
+        );
+      } else {
+        console.log(
+          `Credits stored: session=${session.id}, plan=${planId}, headshots=${headshots}, maxStyles=${maxStyles || 5}`
+        );
+      }
     }
   }
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Loader2, Sparkles, CreditCard, Zap, Check, Crown } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, CreditCard, Zap, Check, Crown, Mail, LogOut, X } from "lucide-react";
 import UploadZone from "@/components/UploadZone";
 import StylePicker from "@/components/StylePicker";
 import ResultGrid from "@/components/ResultGrid";
@@ -16,10 +16,17 @@ interface GenerateResult {
   imageBase64: string;
 }
 
+interface UserInfo {
+  email: string;
+  plan: string | null;
+  credits: { remaining: number; total: number; maxStyles: number };
+}
+
 export default function GeneratePage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const adminKey = searchParams.get("admin");
+  const authError = searchParams.get("auth_error");
 
   const [images, setImages] = useState<string[]>([]);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
@@ -34,7 +41,70 @@ export default function GeneratePage() {
 
   const [upsellLoading, setUpsellLoading] = useState<string | null>(null);
 
-  const isPaid = !!sessionId || !!adminKey;
+  // Auth state
+  const [user, setUser] = useState<UserInfo | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+  const [loginSent, setLoginSent] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const isPaid = !!sessionId || !!adminKey || (user !== null && user.credits.remaining > 0);
+
+  // Fetch current user on mount
+  const fetchUser = useCallback(async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        setUser(data);
+        if (data.credits.remaining > 0) {
+          setRemaining(data.credits.remaining);
+        }
+      }
+    } catch {
+      // Not logged in, that's fine
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  // Show auth error from redirect
+  useEffect(() => {
+    if (authError === "invalid_token") {
+      setError("Login link has expired or is invalid. Please request a new one.");
+    } else if (authError === "missing_token") {
+      setError("Invalid login link.");
+    }
+  }, [authError]);
+
+  const handleSendMagicLink = async () => {
+    if (!loginEmail.trim()) return;
+    setLoginLoading(true);
+    setLoginError(null);
+    try {
+      const res = await fetch("/api/auth/send-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: loginEmail.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to send");
+      setLoginSent(true);
+    } catch (err) {
+      setLoginError(err instanceof Error ? err.message : "Failed to send login link");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    setRemaining(null);
+  };
 
   const handleUpsellCheckout = async (planId: string) => {
     setUpsellLoading(planId);
@@ -130,6 +200,8 @@ export default function GeneratePage() {
 
     setCurrentStyle(null);
     setLoading(false);
+    // Refresh user credits after generation
+    if (user) fetchUser();
   };
 
   const handleClear = () => {
@@ -152,21 +224,60 @@ export default function GeneratePage() {
           <Link href="/" className="text-xl font-bold text-primary">
             HeadPic<span className="text-gold">.site</span>
           </Link>
-          <div className="w-16">
+          <div className="flex items-center gap-3">
             {isPaid && remaining !== null && (
               <span className="text-xs font-medium text-primary/50">
                 {remaining} left
               </span>
             )}
+            {user ? (
+              <div className="flex items-center gap-2">
+                <span className="hidden sm:inline text-xs text-primary/60 max-w-[120px] truncate">
+                  {user.email}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-md p-1.5 text-primary/40 transition-colors hover:bg-primary/5 hover:text-primary/70"
+                  title="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-1.5 rounded-lg border border-primary/15 px-3 py-1.5 text-xs font-medium text-primary/70 transition-colors hover:border-gold hover:text-gold"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                Sign in
+              </button>
+            )}
           </div>
         </div>
       </header>
 
-      {/* Credits banner */}
-      {isPaid && remaining !== null && (
+      {/* User account banner */}
+      {user && user.credits.remaining > 0 && !sessionId && (
+        <div className="bg-gold/10 border-b border-gold/20 py-2 text-center text-sm text-primary/70">
+          <CreditCard className="inline h-4 w-4 mr-1" />
+          You have <strong>{user.credits.remaining}</strong> headshots remaining
+          {user.plan && <span className="ml-1 text-xs text-primary/50">({user.plan} plan)</span>}
+        </div>
+      )}
+
+      {/* Credits banner (session-based) */}
+      {sessionId && !user && remaining !== null && (
         <div className="bg-gold/10 border-b border-gold/20 py-2 text-center text-sm text-primary/70">
           <CreditCard className="inline h-4 w-4 mr-1" />
           You have <strong>{remaining}</strong> headshots remaining
+          {!user && (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className="ml-2 text-gold underline font-medium"
+            >
+              Sign in to save credits to your account
+            </button>
+          )}
         </div>
       )}
 
@@ -429,6 +540,91 @@ export default function GeneratePage() {
           </div>
         ))}
       </div>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="relative w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+            <button
+              onClick={() => {
+                setShowLoginModal(false);
+                setLoginSent(false);
+                setLoginError(null);
+                setLoginEmail("");
+              }}
+              className="absolute right-4 top-4 rounded-md p-1 text-primary/40 hover:text-primary/70"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center mb-6">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gold/10">
+                <Mail className="h-6 w-6 text-gold" />
+              </div>
+              <h3 className="text-xl font-bold text-primary">Sign in to HeadPic.ai</h3>
+              <p className="mt-1 text-sm text-primary/50">
+                We'll send a magic link to your email
+              </p>
+            </div>
+
+            {loginSent ? (
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50">
+                  <Check className="h-8 w-8 text-emerald-500" />
+                </div>
+                <h4 className="text-lg font-semibold text-primary">Check your email</h4>
+                <p className="mt-2 text-sm text-primary/60">
+                  We sent a login link to <strong>{loginEmail}</strong>. Click the link to sign in.
+                </p>
+                <p className="mt-4 text-xs text-primary/40">
+                  Link expires in 15 minutes. Check spam if you don't see it.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowLoginModal(false);
+                    setLoginSent(false);
+                    setLoginEmail("");
+                  }}
+                  className="mt-6 rounded-lg bg-primary/10 px-6 py-2 text-sm font-medium text-primary hover:bg-primary/20"
+                >
+                  Close
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div className="space-y-3">
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMagicLink()}
+                    placeholder="you@example.com"
+                    className="w-full rounded-lg border-2 border-primary/10 px-4 py-3 text-sm text-primary outline-none transition-colors placeholder:text-primary/30 focus:border-gold"
+                    autoFocus
+                  />
+                  {loginError && (
+                    <p className="text-xs text-red-500">{loginError}</p>
+                  )}
+                  <button
+                    onClick={handleSendMagicLink}
+                    disabled={loginLoading || !loginEmail.trim()}
+                    className="w-full rounded-lg bg-gold py-3 text-sm font-bold text-primary transition-colors hover:bg-gold-light disabled:opacity-50"
+                  >
+                    {loginLoading ? (
+                      <Loader2 className="mx-auto h-4 w-4 animate-spin" />
+                    ) : (
+                      "Send Magic Link"
+                    )}
+                  </button>
+                </div>
+                <p className="mt-4 text-center text-xs text-primary/40">
+                  No password needed. We'll email you a secure login link.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }

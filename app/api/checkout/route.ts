@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe, PLANS, type PlanId } from "@/lib/stripe";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,9 +12,15 @@ export async function POST(req: NextRequest) {
 
     const plan = PLANS[planId as PlanId];
 
+    // If user is logged in, attach their email to the Stripe session
+    const user = await getCurrentUser();
+    const userEmail = user?.email;
+
     const session = await getStripe().checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
+      ...(userEmail ? { customer_email: userEmail } : {}),
+      client_reference_id: userEmail || undefined,
       line_items: [
         {
           price_data: {
@@ -33,6 +40,7 @@ export async function POST(req: NextRequest) {
         planId,
         headshots: String(plan.headshots),
         maxStyles: String(plan.styles),
+        ...(userEmail ? { userEmail } : {}),
       },
     });
 
