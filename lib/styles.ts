@@ -7,9 +7,9 @@ export interface Style {
 
 // Core identity preservation instruction - shared across all styles
 const IDENTITY_ANCHOR = `Using the provided photo as reference, edit ONLY the clothing, background, and lighting. 
-You MUST preserve the person's exact facial structure, skin tone, skin texture, eye shape, eye color, nose shape, lip shape, jawline, face proportions, facial hair (if any), hairstyle, hair color, glasses (if any), moles, freckles, and all distinguishing facial features exactly as they appear. 
-Do NOT smooth, beautify, or alter the face in any way. The result must look like the exact same person photographed in a different setting. 
-Keep the face same, keep the skin tone same, do not change skin texture.`;
+You MUST preserve the person's exact facial structure, eye shape, eye color, nose shape, lip shape, jawline, face proportions, facial hair (if any), hairstyle, hair color, glasses (if any), moles, freckles, and all distinguishing facial features exactly as they appear. 
+Apply very subtle, natural-looking skin enhancement: slightly even out skin tone, minimally soften minor blemishes, and give a healthy, well-rested complexion — as if the person had great lighting and a good night's sleep. Do NOT alter facial structure, do NOT change skin color, and do NOT apply heavy or obvious retouching. The result must still look completely natural and realistic, like a real photograph — not airbrushed or filtered.
+The result must look like the exact same person photographed in a professional setting with flattering lighting.`;
 
 export const styles: Style[] = [
   {
