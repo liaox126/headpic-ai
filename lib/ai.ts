@@ -1,6 +1,6 @@
 export async function generateHeadshot(
   images: string[],
-  stylePrompt: string
+  stylePrompt: string,
 ): Promise<string> {
   // Build content array: prompt text + all reference images
   const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = [

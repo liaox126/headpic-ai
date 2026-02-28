@@ -30,6 +30,7 @@ export default function GeneratePage() {
   const [error, setError] = useState<string | null>(null);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [freeUsed, setFreeUsed] = useState(false);
+  const [enhance, setEnhance] = useState(false);
 
   const [upsellLoading, setUpsellLoading] = useState<string | null>(null);
 
@@ -90,6 +91,7 @@ export default function GeneratePage() {
             styleIds: [style.id],
             sessionId: sessionId || undefined,
             adminKey: adminKey || undefined,
+            enhance,
           }),
         });
 
@@ -371,6 +373,33 @@ export default function GeneratePage() {
                 </h2>
               </div>
               <StylePicker selected={selectedStyles} onToggle={toggleStyle} />
+            </section>
+
+            {/* Skin Enhancement Toggle */}
+            <section>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <div className="relative">
+                  <input
+                    type="checkbox"
+                    checked={enhance}
+                    onChange={(e) => setEnhance(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <div className="h-5 w-5 rounded border-2 border-primary/20 bg-white transition-all peer-checked:border-gold peer-checked:bg-gold flex items-center justify-center">
+                    {enhance && (
+                      <Check className="h-3.5 w-3.5 text-white" />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-primary group-hover:text-gold transition-colors">
+                    ✨ Natural Skin Enhancement
+                  </span>
+                  <p className="text-xs text-primary/50">
+                    Subtle skin smoothing &amp; healthy glow — keeps it real, just better lighting
+                  </p>
+                </div>
+              </label>
             </section>
 
             {/* Error */}

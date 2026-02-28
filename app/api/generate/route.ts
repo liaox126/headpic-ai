@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateHeadshot } from "@/lib/ai";
-import { styles } from "@/lib/styles";
+import { styles, buildPrompt } from "@/lib/styles";
 import { getCredits, deductCredits, hasUsedFreeTrial, markFreeTrialUsed } from "@/lib/kv";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       );
     }
     const body = await req.json();
-    const { images, imageBase64, styleIds, sessionId } = body;
+    const { images, imageBase64, styleIds, sessionId, enhance } = body;
 
     // Support both new multi-image format and legacy single image
     const imageList: string[] = Array.isArray(images) && images.length > 0
@@ -137,7 +137,8 @@ export async function POST(req: NextRequest) {
 
     const generationPromises = selectedStyles.map(async (style) => {
       try {
-        const resultBase64 = await generateHeadshot(imageList, style.prompt);
+        const fullPrompt = buildPrompt(style, !!enhance);
+        const resultBase64 = await generateHeadshot(imageList, fullPrompt);
         return {
           styleId: style.id,
           styleName: style.name,
